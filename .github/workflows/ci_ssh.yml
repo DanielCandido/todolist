@@ -7,20 +7,48 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Run Tests
         run: |
           cd backend && npm i && npm run test
           cd ../frontend && npm i && npm run test
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          script_stop: true
           script: |
+            # Carrega o NVM (necessário para npm e pm2 funcionarem)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+            nvm use default
+
+            echo "Node version:"
+            node -v
+            echo "NPM version:"
+            npm -v
+            echo "PM2 version:"
+            pm2 -v
+
             cd /var/www/todolist
             git pull
-            cd backend && npm i && pm2 restart backend || pm2 start index.js --name backend
-            cd ../frontend && npm i && npm run build && pm2 restart frontend || pm2 start npm --name frontend -- start
+
+            cd backend
+            npm i
+            pm2 describe backend > /dev/null \
+              && pm2 restart backend \
+              || pm2 start index.js --name backend
+
+            cd ../frontend
+            npm i
+            npm run build
+            pm2 describe frontend > /dev/null \
+              && pm2 restart frontend \
+              || pm2 start npm --name frontend -- start
