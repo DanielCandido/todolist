@@ -13,13 +13,13 @@ jobs:
       - name: Install & Test Backend
         run: |
           cd backend
-          npm ci
-          npm test
+          npm i
+          npm run test
       - name: Install & Test Frontend
         run: |
           cd frontend
-          npm ci
-          npm test
+          npm i
+          npm run test
       - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v1
