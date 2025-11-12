@@ -1,0 +1,25 @@
+name: CI + Deploy via Docker
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  docker-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker images
+        run: |
+          docker build -t todo-backend ./backend
+          docker build -t todo-frontend ./frontend
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/todo
+            docker-compose down
+            docker-compose up -d --build

@@ -1,0 +1,31 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build-test-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install & Test Backend
+        run: |
+          cd backend
+          npm ci
+          npm test
+      - name: Install & Test Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm test
+      - name: Create Release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release ${{ github.run_number }}
+          body: Automatic release after CI success
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
